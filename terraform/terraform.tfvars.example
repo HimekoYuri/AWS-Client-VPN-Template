@@ -1,0 +1,15 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and update with your values
+
+# IAM Identity Center Configuration
+iic_vpn_group_id = ""
+
+# VPN接続を許可するユーザーIDのリスト
+# IAM Identity CenterでユーザーIDを確認してください
+vpn_user_ids = [
+  "your-user-id-here"
+]
+
+# Organization Configuration
+organization_name = "YourOrganization"
+vpn_domain        = "vpn.example.com"

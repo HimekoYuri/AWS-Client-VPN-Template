@@ -1,0 +1,64 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Variable files
+terraform.tfvars
+*.auto.tfvars
+
+# Plan files
+*.tfplan
+tfplan*
+
+# Certificate files (sensitive)
+certs/*.key
+certs/*.crt
+certs/*.pem
+certs/*.p12
+
+# SAML metadata files (sensitive)
+metadata/*.xml
+!metadata/*.xml.example
+
+# VPN configuration files (sensitive)
+*.ovpn
+vpn-configs/*.ovpn
+
+# Easy-RSA PKI directory (sensitive)
+easy-rsa/easyrsa3/pki/
+
+# Test results
+test-results/
+.pytest_cache/
+.hypothesis/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Kiro
+.kiro/

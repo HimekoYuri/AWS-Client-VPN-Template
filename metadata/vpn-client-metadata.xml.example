@@ -1,0 +1,43 @@
+<!-- 
+  VPN Client用 SAMLメタデータファイルのプレースホルダー
+  
+  このファイルは例です。実際のSAMLメタデータファイルを取得して配置してください。
+  
+  【取得手順】
+  1. AWS IAM Identity Centerコンソールにアクセス
+     https://console.aws.amazon.com/singlesignon/
+  
+  2. 左側メニューから「Applications」を選択
+  
+  3. 「VPN Client」アプリケーションを選択
+  
+  4. 「IAM Identity Center metadata」セクションを見つける
+  
+  5. 「Download metadata file」ボタンをクリック
+  
+  6. ダウンロードしたファイルを以下の名前で保存：
+     metadata/vpn-client-metadata.xml
+  
+  【セキュリティ注意事項】
+  - このファイルには機密情報が含まれます
+  - .gitignoreで除外されているため、Gitにはコミットされません
+  - ファイルは暗号化されたストレージに保管してください
+  - チーム内で共有する場合は、安全な方法（AWS Secrets Manager等）を使用してください
+  
+  【ファイル形式】
+  実際のSAMLメタデータは以下のような形式です：
+  
+  <?xml version="1.0" encoding="UTF-8"?>
+  <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" ...>
+    <IDPSSODescriptor ...>
+      <KeyDescriptor use="signing">
+        <KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+          <X509Data>
+            <X509Certificate>...</X509Certificate>
+          </X509Data>
+        </KeyInfo>
+      </KeyDescriptor>
+      <SingleSignOnService Binding="..." Location="..." />
+    </IDPSSODescriptor>
+  </EntityDescriptor>
+-->
