@@ -65,3 +65,20 @@ Thumbs.db
 easy-rsa/
 terraform/venv/
 *.ovpn
+
+# Terraform sensitive files
+terraform/*.tfvars
+!terraform/*.tfvars.example
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfplan
+
+# Screenshots (may contain sensitive info)
+*.jpg
+*.png
+*.jpeg
+Screenshot*
+
+# macOS
+.DS_Store
