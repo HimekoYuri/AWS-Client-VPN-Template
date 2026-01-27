@@ -223,6 +223,12 @@ EOF
 
 詳細は [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) を参照してください。
 
+## 参考資料
+
+### 関連記事
+- [AWS Client VPN TCP 443ポート移行ガイド](https://qiita.com/yuri_snowwhite/items/36a6e5014c89c05b7f7c)
+  - TCP 443ポートへの移行手順と設定方法について詳しく解説されています
+
 ## ライセンス
 
 MIT License
