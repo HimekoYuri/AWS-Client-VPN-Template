@@ -64,3 +64,4 @@ Thumbs.db
 .kiro/
 easy-rsa/
 terraform/venv/
+*.ovpn
