@@ -43,7 +43,7 @@ resource "aws_ec2_client_vpn_endpoint" "mobile" {
   split_tunnel = false
 
   # トランスポート設定
-  transport_protocol = "udp"
+  transport_protocol = "tcp"
   vpn_port           = 443
 
   # セルフサービスポータル無効化（証明書認証のため不要）

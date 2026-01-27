@@ -25,7 +25,6 @@ resource "aws_ec2_client_vpn_endpoint" "pc" {
   authentication_options {
     type                           = "federated-authentication"
     saml_provider_arn              = aws_iam_saml_provider.vpn_client.arn
-    self_service_saml_provider_arn = aws_iam_saml_provider.vpn_self_service.arn
   }
 
   # 接続ログ設定（CloudWatch Logs）
@@ -40,10 +39,10 @@ resource "aws_ec2_client_vpn_endpoint" "pc" {
   security_group_ids = [aws_security_group.vpn_endpoint.id]
 
   # Split Tunnel有効化（VPNトラフィックのみVPN経由）
-  split_tunnel = true
+  split_tunnel = false
 
   # トランスポート設定
-  transport_protocol = "udp"
+  transport_protocol = "tcp"
   vpn_port           = 443
 
   # セルフサービスポータル有効化
