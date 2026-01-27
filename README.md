@@ -2,6 +2,22 @@
 
 AWS Client VPNを使用したセキュアなリモートアクセス環境の構築プロジェクトです。
 
+## 📑 目次
+
+- [概要](#概要)
+- [構成](#構成)
+- [前提条件](#前提条件)
+- [クイックスタート](#クイックスタート)
+- [詳細ドキュメント](#詳細ドキュメント)
+- [ディレクトリ構造](#ディレクトリ構造)
+- [コスト見積もり](#コスト見積もり)
+- [サポート・トラブルシューティング](#サポートトラブルシューティング)
+- [参考資料](#参考資料)
+- [セキュリティ](#セキュリティ)
+- [ライセンス](#ライセンス)
+
+---
+
 ## 概要
 
 このプロジェクトは、Terraformを使用してAWS Client VPNインフラストラクチャを構築します。
@@ -51,135 +67,136 @@ PC向けのSAML認証とモバイルデバイス向けの証明書認証、2つ�
 - IAM Identity Centerが有効化されていること
 - SAML 2.0アプリケーション設定済み (PC用VPN)
 
-## セットアップ
+## 🚀 クイックスタート
 
-### 1. リポジトリのクローン
+VPN環境を構築するには、以下のドキュメントを**番号順**に実行してください：
 
-```bash
-git clone <repository-url>
-cd Client-VPN-test
-```
+### ステップ1: 証明書の準備
+📄 **[docs/01-easy-rsa-setup.md](docs/01-easy-rsa-setup.md)**
 
-### 2. 証明書の生成
+証明書生成ツール（easy-rsa）をセットアップし、VPN接続に必要な証明書を生成します。
 
 ```bash
-cd easy-rsa/easyrsa3
-
-# CA証明書の初期化
-./easyrsa init-pki
-./easyrsa build-ca nopass
-
-# サーバー証明書の生成
-./easyrsa build-server-full server.vpn.example.com nopass
-
-# クライアント証明書の生成
-./easyrsa build-client-full client1.vpn.example.com nopass
-
-# 証明書をcertsディレクトリにコピー
-cd ../..
-mkdir -p certs
-cp easy-rsa/easyrsa3/pki/ca.crt certs/
-cp easy-rsa/easyrsa3/pki/issued/server.vpn.example.com.crt certs/
-cp easy-rsa/easyrsa3/pki/private/server.vpn.example.com.key certs/
-cp easy-rsa/easyrsa3/pki/issued/client1.vpn.example.com.crt certs/
-cp easy-rsa/easyrsa3/pki/private/client1.vpn.example.com.key certs/
+# 自動スクリプトで証明書を生成（推奨）
+./scripts/generate-certs.sh
 ```
 
-### 3. IAM Identity Centerの設定
+### ステップ2: IAM Identity Centerの設定
+📄 **[docs/02-iam-identity-center-setup.md](docs/02-iam-identity-center-setup.md)**
 
-```bash
-# VPN-Usersグループの作成
-aws identitystore create-group \
-  --identity-store-id <your-identity-store-id> \
-  --display-name "VPN-Users" \
-  --description "VPN接続が許可されたユーザーグループ"
+SAML認証のためのIAM Identity Centerを設定し、VPN用のグループとユーザーを作成します。
 
-# ユーザーの作成とグループへの追加
-aws identitystore create-user \
-  --identity-store-id <your-identity-store-id> \
-  --user-name "vpn-test" \
-  --display-name "vpn-test" \
-  --name GivenName=VPN,FamilyName=Test \
-  --emails Value=vpn-test@example.com,Type=work,Primary=true
-```
+- VPN-Usersグループの作成
+- SAMLアプリケーションの作成
+- メタデータファイルのダウンロード
 
-### 4. Terraformでインフラ構築
+### ステップ3: Terraformデプロイ
+📄 **[docs/03-deployment-guide.md](docs/03-deployment-guide.md)**
+
+Terraformを使用してAWS Client VPNインフラストラクチャをデプロイします。
 
 ```bash
 cd terraform
-
-# 初期化
 terraform init
-
-# 変数ファイルの編集
-cp terraform.tfvars.example terraform.tfvars
-# terraform.tfvarsを編集してユーザーIDなどを設定
-
-# プラン確認
 terraform plan
-
-# 適用
 terraform apply
 ```
 
-### 5. VPN設定ファイルの生成
+### ステップ4: VPN接続テスト
+📄 **PC用**: [docs/04-vpn-connection-pc.md](docs/04-vpn-connection-pc.md)  
+📄 **モバイル用**: [docs/04-vpn-connection-mobile.md](docs/04-vpn-connection-mobile.md)
 
-```bash
-# モバイル用VPN設定ファイルのエクスポート
-aws ec2 export-client-vpn-client-configuration \
-  --client-vpn-endpoint-id <endpoint-id> \
-  --region ap-northeast-1 \
-  --output text > mobile-vpn-config.ovpn
+VPN接続をテストして、正常に動作することを確認します。
 
-# 証明書を設定ファイルに追加
-cat >> mobile-vpn-config.ovpn << EOF
+### ステップ5: 運用・メンテナンス
+📄 **[docs/05-security-maintenance.md](docs/05-security-maintenance.md)**  
+📄 **[docs/06-troubleshooting.md](docs/06-troubleshooting.md)**
 
-<cert>
-$(cat certs/client1.vpn.example.com.crt)
-</cert>
+定期的なメンテナンスとトラブルシューティングの方法を確認します。
 
-<key>
-$(cat certs/client1.vpn.example.com.key)
-</key>
-EOF
-```
+---
 
-## 使用方法
+## 📖 詳細ドキュメント
 
-### モバイルVPN接続
+すべてのドキュメントは **[docs/](docs/)** ディレクトリに格納されています。
 
-1. OpenVPN Connectアプリをインストール
-2. `mobile-vpn-config.ovpn`をインポート
-3. 接続ボタンをタップ
-4. 証明書で自動認証され、接続完了
+詳細は **[docs/README.md](docs/README.md)** を参照してください。
 
-## ディレクトリ構造
+## 📂 ディレクトリ構造
 
 ```
 .
-├── README.md                   # このファイル
-├── terraform/                  # Terraformコード
-│   ├── main.tf                # プロバイダー設定
-│   ├── vpc.tf                 # VPC設定
-│   ├── subnets.tf             # サブネット設定
-│   ├── gateways.tf            # ゲートウェイ設定
-│   ├── route_tables.tf        # ルートテーブル設定
-│   ├── security_groups.tf     # セキュリティグループ設定
-│   ├── acm.tf                 # ACM証明書設定
-│   ├── client_vpn_mobile.tf   # モバイルVPNエンドポイント
-│   ├── iam_identity_center.tf # IAM Identity Center設定
-│   ├── cloudwatch.tf          # CloudWatch Logs設定
-│   ├── cloudtrail.tf          # CloudTrail設定
-│   ├── variables.tf           # 変数定義
-│   ├── outputs.tf             # 出力定義
-│   └── terraform.tfvars       # 変数値（Git管理外）
-├── certs/                      # 証明書ファイル（Git管理外）
-├── easy-rsa/                   # 証明書生成ツール
-├── metadata/                   # SAMLメタデータ（Git管理外）
-├── docs/                       # ドキュメント
-│   ├── DEPLOYMENT_GUIDE.md    # デプロイメントガイド
-│   └── TROUBLESHOOTING.md     # トラブルシューティング
-└── .gitignore                  # Git除外設定
+├── README.md                           # このファイル（プロジェクト概要）
+│
+├── docs/                               # 📚 ドキュメント（番号順に実行）
+│   ├── README.md                       # ドキュメント一覧
+│   ├── 01-easy-rsa-setup.md           # ステップ1: 証明書の準備
+│   ├── 02-iam-identity-center-setup.md # ステップ2: IAM Identity Center設定
+│   ├── 02-saml-application-setup.md   # ステップ2: SAMLアプリケーション設定
+│   ├── 03-deployment-guide.md         # ステップ3: Terraformデプロイ
+│   ├── 03-deployment-checklist.md     # ステップ3: デプロイチェックリスト
+│   ├── 04-vpn-connection-pc.md        # ステップ4: PC用VPN接続
+│   ├── 04-vpn-connection-mobile.md    # ステップ4: モバイル用VPN接続
+│   ├── 05-security-maintenance.md     # ステップ5: セキュリティメンテナンス
+│   ├── 06-troubleshooting.md          # ステップ6: トラブルシューティング
+│   ├── step-by-step/                  # 詳細ガイド
+│   └── ...                            # その他の参考ドキュメント
+│
+├── terraform/                          # 🏗️ Terraformインフラストラクチャコード
+│   ├── main.tf                        # プロバイダー設定
+│   ├── vpc.tf                         # VPC設定
+│   ├── subnets.tf                     # サブネット設定
+│   ├── gateways.tf                    # ゲートウェイ設定
+│   ├── route_tables.tf                # ルートテーブル設定
+│   ├── security_groups.tf             # セキュリティグループ設定
+│   ├── acm.tf                         # ACM証明書設定
+│   ├── client_vpn_pc.tf               # PC用VPNエンドポイント（SAML認証）
+│   ├── client_vpn_mobile.tf           # モバイル用VPNエンドポイント（証明書認証）
+│   ├── iam_identity_center.tf         # IAM Identity Center設定
+│   ├── iam_saml.tf                    # SAML認証設定
+│   ├── cloudwatch.tf                  # CloudWatch Logs設定
+│   ├── cloudtrail.tf                  # CloudTrail設定
+│   ├── variables.tf                   # 変数定義
+│   ├── outputs.tf                     # 出力定義
+│   ├── versions.tf                    # Terraformバージョン設定
+│   ├── terraform.tfvars.example       # 変数値のサンプル
+│   └── terraform.tfvars               # 変数値（Git管理外）
+│
+├── certs/                              # 🔐 証明書ファイル（Git管理外）
+│   ├── README.md                      # 証明書の説明
+│   ├── ca.crt                         # CA証明書
+│   ├── ca.key                         # CA秘密鍵（機密）
+│   ├── server.crt                     # サーバー証明書
+│   ├── server.key                     # サーバー秘密鍵（機密）
+│   ├── client1.vpn.example.com.crt    # クライアント証明書
+│   └── client1.vpn.example.com.key    # クライアント秘密鍵（機密）
+│
+├── easy-rsa/                           # 🔧 証明書生成ツール
+│   └── easyrsa3/                      # easy-rsa v3
+│       ├── easyrsa                    # 証明書生成スクリプト
+│       └── pki/                       # PKIディレクトリ
+│
+├── metadata/                           # 📄 SAMLメタデータ（Git管理外）
+│   ├── README.md                      # メタデータの説明
+│   ├── vpn-client-metadata.xml        # VPN Clientメタデータ
+│   └── vpn-self-service-metadata.xml  # Self-Serviceメタデータ
+│
+├── vpn-configs/                        # 📱 VPN設定ファイル（Git管理外）
+│   ├── README.md                      # 設定ファイルの説明
+│   └── mobile-vpn-config.ovpn         # モバイル用VPN設定
+│
+├── scripts/                            # 🛠️ 自動化スクリプト
+│   ├── generate-certs.sh              # 証明書生成スクリプト（Linux/macOS）
+│   ├── generate-certs.ps1             # 証明書生成スクリプト（Windows）
+│   ├── check-aws-session.sh           # AWS認証確認スクリプト
+│   └── check-aws-session.ps1          # AWS認証確認スクリプト（Windows）
+│
+├── tests/                              # 🧪 テストコード
+│   ├── integration/                   # 統合テスト
+│   ├── property/                      # プロパティベーステスト
+│   └── requirements.txt               # Pythonテスト依存関係
+│
+└── .gitignore                          # Git除外設定
 ```
 
 ## セキュリティ考慮事項
@@ -209,25 +226,64 @@ EOF
 
 **合計**: 約 $120-150/月
 
-## トラブルシューティング
+## 📞 サポート・トラブルシューティング
 
-### VPN接続できない
-- 証明書の有効期限を確認
-- セキュリティグループの設定を確認
-- CloudWatch Logsでエラーを確認
+問題が発生した場合は、以下のドキュメントを参照してください：
 
-### インターネットに接続できない
-- NATゲートウェイの状態を確認
-- ルートテーブルの設定を確認
-- split-tunnelが無効になっているか確認
+1. **[docs/06-troubleshooting.md](docs/06-troubleshooting.md)** - トラブルシューティングガイド
+2. **[docs/step-by-step/troubleshooting.md](docs/step-by-step/troubleshooting.md)** - 詳細トラブルシューティング
+3. CloudWatch Logsでエラーログを確認
+4. 社内のインフラチームに連絡
 
-詳細は [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) を参照してください。
+### よくある問題
 
-## 参考資料
+- **VPN接続できない**: 証明書の有効期限、セキュリティグループの設定を確認
+- **インターネットに接続できない**: NATゲートウェイの状態、ルートテーブルの設定を確認
+- **認証エラー**: IAM Identity Centerの設定、SAMLメタデータを確認
+
+詳細は [docs/06-troubleshooting.md](docs/06-troubleshooting.md) を参照してください。
+
+## 📚 参考資料
+
+### 公式ドキュメント
+- [AWS Client VPN Administrator Guide](https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/)
+- [AWS IAM Identity Center User Guide](https://docs.aws.amazon.com/singlesignon/latest/userguide/)
+- [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 
 ### 関連記事
 - [AWS Client VPN TCP 443ポート移行ガイド](https://qiita.com/yuri_snowwhite/items/36a6e5014c89c05b7f7c)
   - TCP 443ポートへの移行手順と設定方法について詳しく解説されています
+
+### プロジェクト内ドキュメント
+- **[docs/README.md](docs/README.md)** - ドキュメント一覧
+- **[certs/README.md](certs/README.md)** - 証明書の説明
+- **[metadata/README.md](metadata/README.md)** - SAMLメタデータの説明
+- **[vpn-configs/README.md](vpn-configs/README.md)** - VPN設定ファイルの説明
+- **[scripts/README.md](scripts/README.md)** - スクリプトの説明
+- **[tests/README.md](tests/README.md)** - テストの説明
+
+## 🔒 セキュリティ
+
+このプロジェクトでは、以下のセキュリティ対策を実装しています：
+
+### 実装済みセキュリティ機能
+- ✅ 証明書による相互TLS認証（モバイル用VPN）
+- ✅ SAML 2.0認証 + MFA（PC用VPN）
+- ✅ CloudTrailによる監査ログ記録
+- ✅ CloudWatch Logsによる接続ログ記録
+- ✅ S3バケットの暗号化とバージョニング
+- ✅ セキュリティグループによるアクセス制御
+- ✅ プライベートサブネットへのVPNエンドポイント配置
+- ✅ NATゲートウェイによる送信元IP固定化
+
+### セキュリティ推奨事項
+- 証明書の定期的な更新（有効期限: 2028年4月）
+- VPN接続ログの定期的な確認
+- IAM Identity Centerユーザーの定期的なレビュー
+- 不要な証明書の無効化
+- MFAの必須化
+
+詳細は **[docs/05-security-maintenance.md](docs/05-security-maintenance.md)** を参照してください。
 
 ## ライセンス
 
