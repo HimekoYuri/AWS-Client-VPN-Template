@@ -3,7 +3,8 @@
 
 # S3バケット（CloudTrailログ用）
 resource "aws_s3_bucket" "cloudtrail" {
-  bucket = "client-vpn-cloudtrail-logs-${data.aws_caller_identity.current.account_id}"
+  bucket        = "client-vpn-cloudtrail-logs-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
 
   tags = {
     Name        = "client-vpn-cloudtrail-logs"

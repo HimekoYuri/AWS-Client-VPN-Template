@@ -12,9 +12,4 @@ resource "aws_vpc" "main" {
     ManagedBy   = "terraform"
     Purpose     = "AWS Client VPN Infrastructure"
   }
-
-  lifecycle {
-    prevent_destroy = true
-    create_before_destroy = false
-  }
 }
