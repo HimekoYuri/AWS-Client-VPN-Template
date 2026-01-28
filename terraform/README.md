@@ -27,12 +27,15 @@ terraform init
 
 ### 2. プラン確認
 ```bash
-# AWS認証情報をエクスポート
-eval $(aws configure export-credentials --format env)
+# AWS認証情報をエクスポートしてプラン実行
+eval $(aws configure export-credentials --format env) && terraform plan
+```
 
-# プラン実行
+または、シンプルに：
+```bash
 terraform plan
 ```
+※ `aws login`で認証済みの場合、Terraformは自動的に認証情報を使用します
 
 ### 3. 適用
 ```bash
