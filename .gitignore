@@ -21,6 +21,8 @@ certs/*.key
 certs/*.crt
 certs/*.pem
 certs/*.p12
+certs/*.csr
+certs/*.srl
 
 # SAML metadata files (sensitive)
 metadata/*.xml
