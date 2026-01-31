@@ -40,7 +40,7 @@ resource "aws_ec2_client_vpn_endpoint" "mobile" {
   security_group_ids = [aws_security_group.vpn_endpoint.id]
 
   # Split Tunnel有効化（VPNトラフィックのみVPN経由）
-  split_tunnel = false
+  split_tunnel = true
 
   # トランスポート設定
   transport_protocol = "tcp"

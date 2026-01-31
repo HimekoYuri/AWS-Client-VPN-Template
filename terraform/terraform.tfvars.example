@@ -1,8 +1,12 @@
 # Terraform Variables Example
 # Copy this file to terraform.tfvars and update with your values
+#
+# Sensitive values can also be set via environment variables:
+#   export TF_VAR_iic_vpn_group_id="your-group-id"
 
-# IAM Identity Center Configuration
-iic_vpn_group_id = ""
+# IAM Identity Center Configuration (optional)
+# Set via environment variable: TF_VAR_iic_vpn_group_id
+# iic_vpn_group_id = ""
 
 # VPN接続を許可するユーザーIDのリスト
 # IAM Identity CenterでユーザーIDを確認してください

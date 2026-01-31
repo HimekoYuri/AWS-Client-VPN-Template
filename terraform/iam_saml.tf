@@ -43,7 +43,7 @@ resource "aws_iam_saml_provider" "vpn_client" {
   # - メタデータファイルは暗号化されたストレージに保管してください
   #
   # 注意: 実際のデプロイ前に、必ず実際のSAMLメタデータファイルを配置してください
-  saml_metadata_document = file("${path.module}/../metadata/vpn-client-metadata.xml")
+  saml_metadata_document = file("${path.module}/../metadata/vpn-client-saml-metadata.xml")
 
   tags = {
     Name        = "aws-client-vpn-saml-provider"
@@ -85,7 +85,7 @@ resource "aws_iam_saml_provider" "vpn_self_service" {
   # - メタデータファイルは暗号化されたストレージに保管してください
   #
   # 注意: 実際のデプロイ前に、必ず実際のSAMLメタデータファイルを配置してください
-  saml_metadata_document = file("${path.module}/../metadata/vpn-self-service-metadata.xml")
+  saml_metadata_document = file("${path.module}/../metadata/vpn-client-saml-metadata.xml")
 
   tags = {
     Name        = "aws-client-vpn-self-service-saml-provider"
