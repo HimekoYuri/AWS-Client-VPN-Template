@@ -39,7 +39,7 @@ resource "aws_ec2_client_vpn_endpoint" "pc" {
   security_group_ids = [aws_security_group.vpn_endpoint.id]
 
   # Split Tunnel有効化（VPNトラフィックのみVPN経由）
-  split_tunnel = false
+  split_tunnel = true
 
   # トランスポート設定
   transport_protocol = "tcp"
@@ -90,16 +90,16 @@ resource "aws_ec2_client_vpn_network_association" "pc" {
 }
 
 # ----------------------------------------------------------------------------
-# 認可ルール（グループベース）
 # ----------------------------------------------------------------------------
-# Terraformで作成したVPN-UsersグループIDを使用
-# または、既存のグループIDを使用（var.iic_vpn_group_idが設定されている場合）
+# 認可ルール（全認証ユーザー許可）
+# ----------------------------------------------------------------------------
+# SAML認証 + MFA済みユーザーは全員許可
 # ----------------------------------------------------------------------------
 resource "aws_ec2_client_vpn_authorization_rule" "pc_internet" {
   client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.pc.id
   target_network_cidr    = "0.0.0.0/0"
-  access_group_id        = var.iic_vpn_group_id != "" ? var.iic_vpn_group_id : aws_identitystore_group.vpn_users.group_id
-  description            = "Allow internet access for VPN group members"
+  authorize_all_groups   = true
+  description            = "Allow internet access for all authenticated users (SAML + MFA)"
 
   depends_on = [
     aws_ec2_client_vpn_network_association.pc
