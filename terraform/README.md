@@ -18,6 +18,50 @@
    - IAM Identity Centerが有効化されていること
    - SAML Applicationが作成されていること
 
+## 設定ファイル
+
+### terraform.tfvars
+
+`terraform.tfvars.example`をコピーして設定してください：
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
+```
+
+### 環境変数（推奨）
+
+機密性の高い値は環境変数で設定できます：
+
+```bash
+# IAM Identity CenterのグループID（オプション）
+export TF_VAR_iic_vpn_group_id="your-group-id"
+```
+
+### 設定項目
+
+| 変数 | 説明 | 設定方法 |
+|------|------|----------|
+| `iic_vpn_group_id` | IAM Identity CenterグループID | 環境変数推奨 |
+| `vpn_user_ids` | VPNユーザーIDリスト | tfvars |
+| `organization_name` | 組織名 | tfvars |
+| `vpn_domain` | VPNドメイン | tfvars |
+
+## VPN設定
+
+### 認証方式
+
+| エンドポイント | 認証方式 | 認可 |
+|---------------|----------|------|
+| PC用 | SAML + MFA | 全認証ユーザー許可 |
+| モバイル用 | 証明書認証 | 全認証ユーザー許可 |
+
+### Split Tunnel
+
+両エンドポイントで `split_tunnel = true` が有効です。
+- VPN宛先へのトラフィックのみVPN経由
+- その他のトラフィックは直接インターネット経由
+- コスト削減・パフォーマンス向上
+
 ## デプロイ手順（モジュール毎）
 
 ### 重要: モジュール毎のデプロイが推奨されます
@@ -109,7 +153,7 @@ terraform destroy \
   -target=aws_ec2_client_vpn_route.mobile_internet \
   -target=aws_ec2_client_vpn_route.pc_internet \
   -target=aws_ec2_client_vpn_authorization_rule.mobile_internet \
-  -target=aws_ec2_client_vpn_authorization_rule.pc_vpn_users \
+  -target=aws_ec2_client_vpn_authorization_rule.pc_internet \
   -auto-approve
 ```
 
@@ -137,14 +181,6 @@ eval "$(aws configure export-credentials --profile default --format env)" && \
 terraform destroy -auto-approve
 ```
 
-## 設定ファイル
-
-`terraform.tfvars`を編集して、以下の値を設定してください：
-
-```hcl
-vpn_user_ids = ["your-user-id"]
-```
-
 ## トラブルシューティング
 
 ### 認証タイムアウト
@@ -166,17 +202,20 @@ terraform apply -auto-approve
 
 ## 構成ファイル
 
-- `main.tf` - プロバイダー設定
-- `vpc.tf` - VPC設定
-- `subnets.tf` - サブネット設定
-- `gateways.tf` - Internet Gateway / NAT Gateway
-- `route_tables.tf` - ルートテーブル
-- `security_groups.tf` - セキュリティグループ
-- `acm.tf` - ACM証明書
-- `cloudwatch.tf` - CloudWatch Logs
-- `cloudtrail.tf` - CloudTrail監査ログ
-- `iam_identity_center.tf` - IAM Identity Center
-- `client_vpn_mobile.tf` - Mobile VPNエンドポイント（証明書認証）
-- `client_vpn_pc.tf` - PC VPNエンドポイント（SAML認証）
-- `outputs.tf` - 出力値
-- `variables.tf` - 変数定義
+| ファイル | 説明 |
+|----------|------|
+| `main.tf` | プロバイダー設定 |
+| `vpc.tf` | VPC設定 |
+| `subnets.tf` | サブネット設定 |
+| `gateways.tf` | Internet Gateway / NAT Gateway |
+| `route_tables.tf` | ルートテーブル |
+| `security_groups.tf` | セキュリティグループ |
+| `acm.tf` | ACM証明書 |
+| `cloudwatch.tf` | CloudWatch Logs |
+| `cloudtrail.tf` | CloudTrail監査ログ |
+| `iam_identity_center.tf` | IAM Identity Center |
+| `iam_saml.tf` | SAML IdP設定 |
+| `client_vpn_mobile.tf` | Mobile VPNエンドポイント（証明書認証） |
+| `client_vpn_pc.tf` | PC VPNエンドポイント（SAML認証） |
+| `outputs.tf` | 出力値 |
+| `variables.tf` | 変数定義 |
