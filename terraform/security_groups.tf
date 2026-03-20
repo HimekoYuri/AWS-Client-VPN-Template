@@ -4,15 +4,15 @@
 
 resource "aws_security_group" "vpn_endpoint" {
   name        = "client-vpn-endpoint-sg"
-  description = "Security group for Client VPN endpoints - allows UDP 443 for VPN connections"
+  description = "Security group for Client VPN endpoints - allows TCP 443 for VPN connections"
   vpc_id      = aws_vpc.main.id
 
-  # VPNクライアントからのインバウンドトラフィック（UDP 443）
+  # VPNクライアントからのインバウンドトラフィック（TCP 443）
   ingress {
-    description = "VPN client traffic - UDP 443"
+    description = "VPN client traffic - TCP 443"
     from_port   = 443
     to_port     = 443
-    protocol    = "udp"
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
