@@ -38,8 +38,8 @@ resource "aws_ec2_client_vpn_endpoint" "pc" {
   vpc_id             = aws_vpc.main.id
   security_group_ids = [aws_security_group.vpn_endpoint.id]
 
-  # Split Tunnel有効化（VPNトラフィックのみVPN経由）
-  split_tunnel = true
+  # Split Tunnel無効化（全トラフィックVPN経由）
+  split_tunnel = false
 
   # トランスポート設定
   transport_protocol = "tcp"
@@ -106,18 +106,4 @@ resource "aws_ec2_client_vpn_authorization_rule" "pc_internet" {
   ]
 }
 
-# ----------------------------------------------------------------------------
-# ルート設定（インターネットアクセス）
-# ----------------------------------------------------------------------------
-resource "aws_ec2_client_vpn_route" "pc_internet" {
-  count = length(aws_subnet.private)
 
-  client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.pc.id
-  destination_cidr_block = "0.0.0.0/0"
-  target_vpc_subnet_id   = aws_ec2_client_vpn_network_association.pc[count.index].subnet_id
-  description            = "Route to internet via NAT Gateway"
-
-  depends_on = [
-    aws_ec2_client_vpn_network_association.pc
-  ]
-}
