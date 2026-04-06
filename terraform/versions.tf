@@ -6,7 +6,11 @@
 #   - import blocks
 #   - moved blocks improvements
 #   - terraform test framework
-# AWS Provider 5.80+ for latest Client VPN and IAM Identity Center features
+# AWS Provider 6.x features:
+#   - Multi-region support (resource-level region attribute)
+#   - Stricter boolean validation
+#   - Removed deprecated resources (OpsWorks, SimpleDB, WorkLink)
+#   - EIP vpc parameter removed (domain = "vpc" required)
 # ============================================================================
 
 terraform {
@@ -15,7 +19,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.80"
+      version = "~> 6.39"
     }
   }
 }
