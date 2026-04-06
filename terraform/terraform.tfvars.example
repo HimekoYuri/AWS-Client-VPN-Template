@@ -18,6 +18,12 @@
 # vpn_client_cidr_mobile    = "172.17.0.0/22"
 # vpn_session_timeout_hours = 8
 
+# NAT Gateway Configuration
+# "regional"  - 1 NAT GW (AZ非依存)
+# "single_az" - 1 NAT GW (最初のAZに配置、コスト節約)
+# "multi_az"  - AZごとに1 NAT GW (高可用性)
+# nat_gateway_mode = "single_az"
+
 # IAM Identity Center - VPN接続を許可するユーザーIDのリスト
 vpn_user_ids = [
   # "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
@@ -30,3 +36,6 @@ vpn_domain        = "vpn.example.com"
 # Logging Configuration
 # log_retention_days   = 90
 # enable_vpc_flow_logs = true
+
+# Encryption Configuration
+# enable_kms_encryption = true

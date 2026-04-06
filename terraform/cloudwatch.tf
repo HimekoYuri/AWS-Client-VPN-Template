@@ -11,7 +11,7 @@
 resource "aws_cloudwatch_log_group" "vpn_pc" {
   name              = "/aws/clientvpn/pc"
   retention_in_days = var.log_retention_days
-  kms_key_id        = aws_kms_key.logs.arn
+  kms_key_id        = local.logs_kms_key_arn
 
   tags = {
     Name    = "client-vpn-pc-logs"
@@ -30,7 +30,7 @@ resource "aws_cloudwatch_log_stream" "vpn_pc" {
 resource "aws_cloudwatch_log_group" "vpn_mobile" {
   name              = "/aws/clientvpn/mobile"
   retention_in_days = var.log_retention_days
-  kms_key_id        = aws_kms_key.logs.arn
+  kms_key_id        = local.logs_kms_key_arn
 
   tags = {
     Name    = "client-vpn-mobile-logs"

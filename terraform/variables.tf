@@ -75,6 +75,20 @@ variable "availability_zones" {
 }
 
 # ----------------------------------------------------------------------------
+# NAT Gateway Configuration
+# ----------------------------------------------------------------------------
+variable "nat_gateway_mode" {
+  description = "NAT Gateway deployment mode: regional (1 NAT GW, AZ非依存), single_az (1 NAT GW in first AZ), multi_az (1 NAT GW per AZ, 高可用性)"
+  type        = string
+  default     = "single_az"
+
+  validation {
+    condition     = contains(["regional", "single_az", "multi_az"], var.nat_gateway_mode)
+    error_message = "nat_gateway_mode must be one of: regional, single_az, multi_az."
+  }
+}
+
+# ----------------------------------------------------------------------------
 # VPN Configuration
 # ----------------------------------------------------------------------------
 variable "vpn_client_cidr_pc" {
@@ -150,6 +164,15 @@ variable "log_retention_days" {
 
 variable "enable_vpc_flow_logs" {
   description = "Enable VPC Flow Logs for network monitoring"
+  type        = bool
+  default     = true
+}
+
+# ----------------------------------------------------------------------------
+# Encryption Configuration
+# ----------------------------------------------------------------------------
+variable "enable_kms_encryption" {
+  description = "Enable KMS CMK encryption for CloudWatch Logs, CloudTrail, S3. When false, S3 uses AES256 and CloudWatch Logs/CloudTrail use default encryption."
   type        = bool
   default     = true
 }

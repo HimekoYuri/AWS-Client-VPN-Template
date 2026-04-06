@@ -26,9 +26,9 @@ output "vpn_endpoint_security_group_id" {
 }
 
 # NAT Gateway
-output "nat_gateway_eip" {
-  description = "NAT Gateway Elastic IP"
-  value       = aws_eip.nat.public_ip
+output "nat_gateway_eips" {
+  description = "NAT Gateway Elastic IPs"
+  value       = aws_eip.nat[*].public_ip
 }
 
 # VPN Endpoints
@@ -103,13 +103,13 @@ output "vpn_users_group_id" {
   value       = aws_identitystore_group.vpn_users.group_id
 }
 
-# KMS
+# KMS (only when enabled)
 output "logs_kms_key_arn" {
   description = "KMS Key ARN for CloudWatch Logs encryption"
-  value       = aws_kms_key.logs.arn
+  value       = local.logs_kms_key_arn
 }
 
 output "cloudtrail_kms_key_arn" {
   description = "KMS Key ARN for CloudTrail encryption"
-  value       = aws_kms_key.cloudtrail.arn
+  value       = local.cloudtrail_kms_key_arn
 }
