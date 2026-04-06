@@ -1,14 +1,8 @@
 # ============================================================================
 # CloudWatch Logs - VPN接続ログ
 # ============================================================================
-# 
-# このファイルは、Client VPNエンドポイントの接続ログを記録するための
-# CloudWatch Logsグループとストリームを定義します。
-#
-# 要件:
-# - Requirements 2.5: VPN接続ログをCloudWatch Logsに記録する
-# - 保持期間: 30日
-# - PC用とスマホ用で別々のロググループを使用
+# Requirements: 2.5 - VPN接続ログをCloudWatch Logsに記録する
+# SAST: KMS暗号化を有効化、保持期間を変数化
 # ============================================================================
 
 # ----------------------------------------------------------------------------
@@ -16,13 +10,12 @@
 # ----------------------------------------------------------------------------
 resource "aws_cloudwatch_log_group" "vpn_pc" {
   name              = "/aws/clientvpn/pc"
-  retention_in_days = 30
+  retention_in_days = var.log_retention_days
+  kms_key_id        = local.logs_kms_key_arn
 
   tags = {
-    Name        = "client-vpn-pc-logs"
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-    Purpose     = "PC VPN Connection Logs"
+    Name    = "client-vpn-pc-logs"
+    Purpose = "PC VPN Connection Logs"
   }
 }
 
@@ -36,13 +29,12 @@ resource "aws_cloudwatch_log_stream" "vpn_pc" {
 # ----------------------------------------------------------------------------
 resource "aws_cloudwatch_log_group" "vpn_mobile" {
   name              = "/aws/clientvpn/mobile"
-  retention_in_days = 30
+  retention_in_days = var.log_retention_days
+  kms_key_id        = local.logs_kms_key_arn
 
   tags = {
-    Name        = "client-vpn-mobile-logs"
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-    Purpose     = "Mobile VPN Connection Logs"
+    Name    = "client-vpn-mobile-logs"
+    Purpose = "Mobile VPN Connection Logs"
   }
 }
 

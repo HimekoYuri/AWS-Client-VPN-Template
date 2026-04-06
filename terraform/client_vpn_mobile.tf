@@ -1,63 +1,47 @@
 # ============================================================================
 # Client VPN Endpoint - スマホ用（証明書認証）
 # ============================================================================
-# 
-# このファイルは、スマホ用のClient VPNエンドポイントを定義します。
-# 認証方式: 相互TLS証明書認証（MFAなし）
-#
-# 要件:
-# - Requirements 3.1: クライアント証明書による認証機能を提供
-# - Requirements 3.2: 有効な証明書でMFA認証なしで接続を確立
-# - Requirements 3.3: 無効または期限切れの証明書で接続を拒否
-# - Requirements 2.5: 接続ログをCloudWatch Logsに記録
-# - Requirements 5.3: プライベートサブネットに関連付け
-# - Requirements 4.4: インターネットアクセス（0.0.0.0/0）を許可
+# Requirements: 3.1, 3.2, 3.3, 2.5, 5.3, 4.4
+# SAST: セッションタイムアウト設定、バナーテキスト追加
 # ============================================================================
 
-# ----------------------------------------------------------------------------
-# スマホ用Client VPNエンドポイント
-# ----------------------------------------------------------------------------
 resource "aws_ec2_client_vpn_endpoint" "mobile" {
   description            = "Client VPN Endpoint for Mobile (Certificate Auth)"
   server_certificate_arn = aws_acm_certificate.vpn_server.arn
   client_cidr_block      = var.vpn_client_cidr_mobile
+  session_timeout_hours  = var.vpn_session_timeout_hours
 
-  # 証明書認証設定（相互TLS）
   authentication_options {
     type                       = "certificate-authentication"
     root_certificate_chain_arn = aws_acm_certificate.vpn_client.arn
   }
 
-  # 接続ログ設定（CloudWatch Logs）
   connection_log_options {
     enabled               = true
     cloudwatch_log_group  = aws_cloudwatch_log_group.vpn_mobile.name
     cloudwatch_log_stream = aws_cloudwatch_log_stream.vpn_mobile.name
   }
 
-  # ネットワーク設定
   vpc_id             = aws_vpc.main.id
   security_group_ids = [aws_security_group.vpn_endpoint.id]
-
-  # Split Tunnel無効化（全トラフィックVPN経由）
-  split_tunnel = false
-
-  # トランスポート設定
+  split_tunnel       = false
   transport_protocol = "tcp"
   vpn_port           = 443
 
-  # セルフサービスポータル無効化（証明書認証のため不要）
   self_service_portal = "disabled"
 
-  # DNS設定
+  # SAST: VPN接続時のセキュリティバナー
+  client_login_banner_options {
+    enabled     = true
+    banner_text = "Authorized users only. All activity is monitored and logged."
+  }
+
   dns_servers = ["8.8.8.8", "8.8.4.4"]
 
   tags = {
-    Name        = "client-vpn-mobile-endpoint"
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-    Purpose     = "Mobile VPN with Certificate Auth"
-    AuthType    = "Certificate"
+    Name     = "client-vpn-mobile-endpoint"
+    Purpose  = "Mobile VPN with Certificate Auth"
+    AuthType = "Certificate"
   }
 
   lifecycle {
@@ -71,9 +55,6 @@ resource "aws_ec2_client_vpn_endpoint" "mobile" {
   ]
 }
 
-# ----------------------------------------------------------------------------
-# ネットワーク関連付け（Multi-AZ構成）
-# ----------------------------------------------------------------------------
 resource "aws_ec2_client_vpn_network_association" "mobile" {
   count = length(aws_subnet.private)
 
@@ -83,24 +64,13 @@ resource "aws_ec2_client_vpn_network_association" "mobile" {
   lifecycle {
     create_before_destroy = true
   }
-
-  depends_on = [
-    aws_ec2_client_vpn_endpoint.mobile
-  ]
 }
 
-# ----------------------------------------------------------------------------
-# 認可ルール（全認証済みユーザー許可）
-# ----------------------------------------------------------------------------
 resource "aws_ec2_client_vpn_authorization_rule" "mobile_internet" {
   client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.mobile.id
   target_network_cidr    = "0.0.0.0/0"
   authorize_all_groups   = true
   description            = "Allow internet access for all authenticated users"
 
-  depends_on = [
-    aws_ec2_client_vpn_network_association.mobile
-  ]
+  depends_on = [aws_ec2_client_vpn_network_association.mobile]
 }
-
-

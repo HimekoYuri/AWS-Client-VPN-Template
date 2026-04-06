@@ -1,19 +1,23 @@
-# CloudTrail Configuration for AWS Client VPN Infrastructure
+# ============================================================================
+# CloudTrail Configuration
+# ============================================================================
 # Requirements: 7.5 - CloudTrailでAPI呼び出しを記録する
+# SAST: KMS暗号化、S3バケットSSL強制、ライフサイクル管理
+# ============================================================================
 
+# ----------------------------------------------------------------------------
 # S3バケット（CloudTrailログ用）
+# ----------------------------------------------------------------------------
 resource "aws_s3_bucket" "cloudtrail" {
   bucket        = "client-vpn-cloudtrail-logs-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 
   tags = {
-    Name        = "client-vpn-cloudtrail-logs"
-    Purpose     = "CloudTrail Logs Storage"
-    Environment = "production"
+    Name    = "client-vpn-cloudtrail-logs"
+    Purpose = "CloudTrail Logs Storage"
   }
 }
 
-# S3バケットバージョニング
 resource "aws_s3_bucket_versioning" "cloudtrail" {
   bucket = aws_s3_bucket.cloudtrail.id
 
@@ -22,18 +26,19 @@ resource "aws_s3_bucket_versioning" "cloudtrail" {
   }
 }
 
-# S3バケット暗号化（サーバーサイド暗号化 - AES256）
+# SAST: AES256からKMS CMKに変更（キーローテーション対応）
 resource "aws_s3_bucket_server_side_encryption_configuration" "cloudtrail" {
   bucket = aws_s3_bucket.cloudtrail.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = var.enable_kms_encryption ? "aws:kms" : "AES256"
+      kms_master_key_id = local.cloudtrail_kms_key_arn
     }
+    bucket_key_enabled = var.enable_kms_encryption
   }
 }
 
-# S3バケットパブリックアクセスブロック
 resource "aws_s3_bucket_public_access_block" "cloudtrail" {
   bucket = aws_s3_bucket.cloudtrail.id
 
@@ -43,13 +48,28 @@ resource "aws_s3_bucket_public_access_block" "cloudtrail" {
   restrict_public_buckets = true
 }
 
-# S3バケットポリシー（CloudTrailアクセス許可）
+# SAST: SSL/TLS通信を強制
 resource "aws_s3_bucket_policy" "cloudtrail" {
   bucket = aws_s3_bucket.cloudtrail.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      {
+        Sid    = "DenyInsecureTransport"
+        Effect = "Deny"
+        Principal = "*"
+        Action = "s3:*"
+        Resource = [
+          aws_s3_bucket.cloudtrail.arn,
+          "${aws_s3_bucket.cloudtrail.arn}/*"
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      },
       {
         Sid    = "AWSCloudTrailAclCheck"
         Effect = "Allow"
@@ -79,28 +99,57 @@ resource "aws_s3_bucket_policy" "cloudtrail" {
   depends_on = [aws_s3_bucket_public_access_block.cloudtrail]
 }
 
+# SAST: 古いログの自動削除でコスト最適化
+resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail" {
+  bucket = aws_s3_bucket.cloudtrail.id
+
+  rule {
+    id     = "expire-old-logs"
+    status = "Enabled"
+
+    transition {
+      days          = 90
+      storage_class = "STANDARD_IA"
+    }
+
+    transition {
+      days          = 180
+      storage_class = "GLACIER"
+    }
+
+    expiration {
+      days = 365
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+  }
+
+  depends_on = [aws_s3_bucket_versioning.cloudtrail]
+}
+
+# ----------------------------------------------------------------------------
 # CloudTrail
+# ----------------------------------------------------------------------------
+# SAST: KMS暗号化を追加
 resource "aws_cloudtrail" "main" {
   name                          = "client-vpn-trail"
   s3_bucket_name                = aws_s3_bucket.cloudtrail.id
   include_global_service_events = true
   is_multi_region_trail         = true
   enable_log_file_validation    = true
+  kms_key_id                    = local.cloudtrail_kms_key_arn
 
   event_selector {
     read_write_type           = "All"
     include_management_events = true
-    # Client VPN API呼び出しは管理イベントとして自動的に記録されます
   }
 
   tags = {
-    Name        = "client-vpn-cloudtrail"
-    Purpose     = "API Call Auditing"
-    Environment = "production"
+    Name    = "client-vpn-cloudtrail"
+    Purpose = "API Call Auditing"
   }
 
   depends_on = [aws_s3_bucket_policy.cloudtrail]
 }
-
-# 現在のAWSアカウントIDを取得
-data "aws_caller_identity" "current" {}

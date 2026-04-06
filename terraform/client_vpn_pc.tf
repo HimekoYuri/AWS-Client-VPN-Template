@@ -1,62 +1,47 @@
 # ============================================================================
 # Client VPN Endpoint - PC用（SAML + MFA認証）
 # ============================================================================
-# 
-# このファイルは、PC用のClient VPNエンドポイントを定義します。
-# 認証方式: IAM Identity Center（SAML 2.0）+ MFA
-#
-# 要件:
-# - Requirements 2.1: IAM Identity Centerと連携した認証機能を提供
-# - Requirements 2.2: MFA認証を要求
-# - Requirements 2.5: 接続ログをCloudWatch Logsに記録
-# - Requirements 5.3: プライベートサブネットに関連付け
-# - Requirements 4.4: インターネットアクセス（0.0.0.0/0）を許可
+# Requirements: 2.1, 2.2, 2.5, 5.3, 4.4
+# SAST: セッションタイムアウト設定、バナーテキスト追加
 # ============================================================================
 
-# ----------------------------------------------------------------------------
-# PC用Client VPNエンドポイント
-# ----------------------------------------------------------------------------
 resource "aws_ec2_client_vpn_endpoint" "pc" {
   description            = "Client VPN Endpoint for PC (SAML + MFA)"
   server_certificate_arn = aws_acm_certificate.vpn_server.arn
   client_cidr_block      = var.vpn_client_cidr_pc
+  session_timeout_hours  = var.vpn_session_timeout_hours
 
-  # SAML認証設定（IAM Identity Center連携）
   authentication_options {
-    type                           = "federated-authentication"
-    saml_provider_arn              = aws_iam_saml_provider.vpn_client.arn
+    type              = "federated-authentication"
+    saml_provider_arn = aws_iam_saml_provider.vpn_client.arn
   }
 
-  # 接続ログ設定（CloudWatch Logs）
   connection_log_options {
     enabled               = true
     cloudwatch_log_group  = aws_cloudwatch_log_group.vpn_pc.name
     cloudwatch_log_stream = aws_cloudwatch_log_stream.vpn_pc.name
   }
 
-  # ネットワーク設定
   vpc_id             = aws_vpc.main.id
   security_group_ids = [aws_security_group.vpn_endpoint.id]
-
-  # Split Tunnel無効化（全トラフィックVPN経由）
-  split_tunnel = false
-
-  # トランスポート設定
+  split_tunnel       = false
   transport_protocol = "tcp"
   vpn_port           = 443
 
-  # セルフサービスポータル有効化
   self_service_portal = "enabled"
 
-  # DNS設定
+  # SAST: VPN接続時のセキュリティバナー
+  client_login_banner_options {
+    enabled     = true
+    banner_text = "Authorized users only. All activity is monitored and logged."
+  }
+
   dns_servers = ["8.8.8.8", "8.8.4.4"]
 
   tags = {
-    Name        = "client-vpn-pc-endpoint"
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-    Purpose     = "PC VPN with SAML + MFA"
-    AuthType    = "SAML"
+    Name     = "client-vpn-pc-endpoint"
+    Purpose  = "PC VPN with SAML + MFA"
+    AuthType = "SAML"
   }
 
   lifecycle {
@@ -71,9 +56,6 @@ resource "aws_ec2_client_vpn_endpoint" "pc" {
   ]
 }
 
-# ----------------------------------------------------------------------------
-# ネットワーク関連付け（Multi-AZ構成）
-# ----------------------------------------------------------------------------
 resource "aws_ec2_client_vpn_network_association" "pc" {
   count = length(aws_subnet.private)
 
@@ -83,27 +65,13 @@ resource "aws_ec2_client_vpn_network_association" "pc" {
   lifecycle {
     create_before_destroy = true
   }
-
-  depends_on = [
-    aws_ec2_client_vpn_endpoint.pc
-  ]
 }
 
-# ----------------------------------------------------------------------------
-# ----------------------------------------------------------------------------
-# 認可ルール（全認証ユーザー許可）
-# ----------------------------------------------------------------------------
-# SAML認証 + MFA済みユーザーは全員許可
-# ----------------------------------------------------------------------------
 resource "aws_ec2_client_vpn_authorization_rule" "pc_internet" {
   client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.pc.id
   target_network_cidr    = "0.0.0.0/0"
   authorize_all_groups   = true
   description            = "Allow internet access for all authenticated users (SAML + MFA)"
 
-  depends_on = [
-    aws_ec2_client_vpn_network_association.pc
-  ]
+  depends_on = [aws_ec2_client_vpn_network_association.pc]
 }
-
-
