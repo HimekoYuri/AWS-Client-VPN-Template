@@ -1,19 +1,32 @@
+# ============================================================================
 # Terraform Variables Example
-# Copy this file to terraform.tfvars and update with your values
-#
-# Sensitive values can also be set via environment variables:
-#   export TF_VAR_iic_vpn_group_id="your-group-id"
+# ============================================================================
+# Copy this file to terraform.tfvars and update with your values.
 
-# IAM Identity Center Configuration (optional)
-# Set via environment variable: TF_VAR_iic_vpn_group_id
-# iic_vpn_group_id = ""
+# AWS Configuration
+# aws_region  = "ap-northeast-1"
+# environment = "dev"
 
-# VPN接続を許可するユーザーIDのリスト
-# IAM Identity CenterでユーザーIDを確認してください
+# VPC Configuration
+# vpc_cidr             = "192.168.0.0/16"
+# public_subnet_cidrs  = ["192.168.1.0/24", "192.168.2.0/24"]
+# private_subnet_cidrs = ["192.168.10.0/24", "192.168.11.0/24"]
+# availability_zones   = ["ap-northeast-1a", "ap-northeast-1c"]
+
+# VPN Configuration
+# vpn_client_cidr_pc        = "172.16.0.0/22"
+# vpn_client_cidr_mobile    = "172.17.0.0/22"
+# vpn_session_timeout_hours = 8
+
+# IAM Identity Center - VPN接続を許可するユーザーIDのリスト
 vpn_user_ids = [
-  "your-user-id-here"
+  # "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 ]
 
-# Organization Configuration
+# Certificate Configuration
 organization_name = "YourOrganization"
 vpn_domain        = "vpn.example.com"
+
+# Logging Configuration
+# log_retention_days   = 90
+# enable_vpc_flow_logs = true
